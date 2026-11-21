@@ -7,10 +7,47 @@
 
     <title>GambarIn! - Digital Art Marketplace</title>
 
-    <!-- Menghubungkan file CSS -->
-     <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FONT -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- CSS -->
     <link rel="stylesheet" href="style.css">
+
+    <!-- WATERMARK STYLE -->
+    <style>
+        .creator-watermark {
+            position: fixed;
+            bottom: 18px;
+            right: 20px;
+            z-index: 9999;
+            padding: 8px 14px;
+            border-radius: 30px;
+            background: rgba(255, 255, 255, 0.88);
+            border: 1px solid rgba(0, 0, 0, 0.07);
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+            font-family: 'Poppins', sans-serif;
+            font-size: 10px;
+            color: #888;
+            letter-spacing: 0.3px;
+            pointer-events: none;
+            backdrop-filter: blur(8px);
+        }
+
+        .creator-watermark span {
+            color: #333;
+            font-weight: 700;
+        }
+
+        @media (max-width: 480px) {
+            .creator-watermark {
+                bottom: 12px;
+                right: 12px;
+                font-size: 9px;
+                padding: 6px 11px;
+            }
+        }
+    </style>
 </head>
 
 <body>
@@ -27,16 +64,16 @@
             </div>
 
             <div class="nav-buttons" id="navButtons">
-    <button class="btn-login">Login</button>
-    <button class="btn-register">Register</button>
-</div>
+                <button class="btn-login">Login</button>
+                <button class="btn-register">Register</button>
+            </div>
         </nav>
     </header>
 
-
-    <!-- HERO SECTION -->
+    <!-- MAIN CONTENT -->
     <main>
 
+        <!-- HERO SECTION -->
         <section class="hero" id="home">
             <div class="hero-content">
                 <p class="hero-label">DIGITAL ART MARKETPLACE</p>
@@ -57,7 +94,6 @@
             </div>
         </section>
 
-
         <!-- EXPLORE SECTION -->
         <section class="explore" id="explore">
 
@@ -72,7 +108,7 @@
 
             <div class="artwork-container" id="artworkContainer">
 
-                <!-- Karya pertama -->
+                <!-- KARYA PERTAMA -->
                 <div class="artwork-card">
                     <div class="artwork-image">
                         <img src="images/artwork1.jpg" alt="Ilustrasi digital pertama">
@@ -85,7 +121,7 @@
                     </div>
                 </div>
 
-                <!-- Karya kedua -->
+                <!-- KARYA KEDUA -->
                 <div class="artwork-card">
                     <div class="artwork-image">
                         <img src="images/artwork2.jpg" alt="Ilustrasi digital kedua">
@@ -98,7 +134,7 @@
                     </div>
                 </div>
 
-                <!-- Karya ketiga -->
+                <!-- KARYA KETIGA -->
                 <div class="artwork-card">
                     <div class="artwork-image">
                         <img src="images/artwork3.jpg" alt="Ilustrasi digital ketiga">
@@ -113,7 +149,6 @@
 
             </div>
         </section>
-
 
         <!-- ABOUT SECTION -->
         <section class="about" id="about">
@@ -130,17 +165,20 @@
 
     </main>
 
-
     <!-- FOOTER -->
     <footer>
         <p>© 2026 GambarIn! Digital Art Marketplace.</p>
     </footer>
 
+    <!-- CREATOR WATERMARK -->
+    <div class="creator-watermark">
+        Created by <span>@zuhaiirra</span>
+    </div>
 
-    <!-- Menghubungkan file JavaScript -->
-   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supabase.js"></script>
-<script src="script.js"></script>
+    <!-- JAVASCRIPT -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase.js"></script>
+    <script src="script.js"></script>
 
 </body>
 </html>
