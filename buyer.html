@@ -9,7 +9,43 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="buyer.css">
+
+    <!-- CREATOR WATERMARK -->
+    <style>
+        .creator-watermark {
+            position: fixed;
+            bottom: 18px;
+            right: 20px;
+            z-index: 9999;
+            padding: 8px 14px;
+            border-radius: 30px;
+            background: rgba(255, 255, 255, 0.88);
+            border: 1px solid rgba(0, 0, 0, 0.07);
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+            font-family: 'Poppins', sans-serif;
+            font-size: 10px;
+            color: #888;
+            letter-spacing: 0.3px;
+            pointer-events: none;
+            backdrop-filter: blur(8px);
+        }
+
+        .creator-watermark span {
+            color: #333;
+            font-weight: 700;
+        }
+
+        @media (max-width: 480px) {
+            .creator-watermark {
+                bottom: 12px;
+                right: 12px;
+                font-size: 9px;
+                padding: 6px 11px;
+            }
+        }
+    </style>
 </head>
+
 <body>
 
 <div class="buyer-layout">
@@ -286,6 +322,12 @@
     </div>
 </div>
 
+<!-- CREATOR WATERMARK -->
+<div class="creator-watermark">
+    Created by <span>@zuhaiirra</span>
+</div>
+
+<!-- JAVASCRIPT -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase.js"></script>
 <script src="buyer.js"></script>
