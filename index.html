@@ -1,0 +1,146 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>GambarIn! - Digital Art Marketplace</title>
+
+    <!-- Menghubungkan file CSS -->
+     <link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- NAVBAR -->
+    <header>
+        <nav class="navbar">
+            <a href="#" class="logo">GambarIn<span>!</span></a>
+
+            <div class="nav-links">
+                <a href="#home">Home</a>
+                <a href="#explore">Explore</a>
+                <a href="#about">About</a>
+            </div>
+
+            <div class="nav-buttons" id="navButtons">
+    <button class="btn-login">Login</button>
+    <button class="btn-register">Register</button>
+</div>
+        </nav>
+    </header>
+
+
+    <!-- HERO SECTION -->
+    <main>
+
+        <section class="hero" id="home">
+            <div class="hero-content">
+                <p class="hero-label">DIGITAL ART MARKETPLACE</p>
+
+                <h1>
+                    Your Imagination,
+                    <span>Our Creation.</span>
+                </h1>
+
+                <p class="hero-description">
+                    Temukan ilustrasi digital unik atau jual
+                    karya kreatifmu bersama GambarIn!
+                </p>
+
+                <a href="#explore" class="btn-explore">
+                    Explore Artwork
+                </a>
+            </div>
+        </section>
+
+
+        <!-- EXPLORE SECTION -->
+        <section class="explore" id="explore">
+
+            <div class="section-heading">
+                <p>OUR COLLECTION</p>
+                <h2>Explore Artwork</h2>
+                <span>
+                    Temukan berbagai karya ilustrasi dari
+                    kreator berbakat.
+                </span>
+            </div>
+
+            <div class="artwork-container" id="artworkContainer">
+
+                <!-- Karya pertama -->
+                <div class="artwork-card">
+                    <div class="artwork-image">
+                        <img src="images/artwork1.jpg" alt="Ilustrasi digital pertama">
+                    </div>
+
+                    <div class="artwork-info">
+                        <h3>Dreamy Illustration</h3>
+                        <p>by Artist One</p>
+                        <strong>Rp50.000</strong>
+                    </div>
+                </div>
+
+                <!-- Karya kedua -->
+                <div class="artwork-card">
+                    <div class="artwork-image">
+                        <img src="images/artwork2.jpg" alt="Ilustrasi digital kedua">
+                    </div>
+
+                    <div class="artwork-info">
+                        <h3>Fantasy World</h3>
+                        <p>by Artist Two</p>
+                        <strong>Rp75.000</strong>
+                    </div>
+                </div>
+
+                <!-- Karya ketiga -->
+                <div class="artwork-card">
+                    <div class="artwork-image">
+                        <img src="images/artwork3.jpg" alt="Ilustrasi digital ketiga">
+                    </div>
+
+                    <div class="artwork-info">
+                        <h3>Little Memories</h3>
+                        <p>by Artist Three</p>
+                        <strong>Rp60.000</strong>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+
+        <!-- ABOUT SECTION -->
+        <section class="about" id="about">
+            <p>ABOUT US</p>
+            <h2>Creativity Has No Limits.</h2>
+
+            <p>
+                GambarIn! merupakan platform marketplace
+                digital yang menghubungkan ilustrator dengan
+                pembeli untuk menemukan dan menawarkan
+                berbagai karya ilustrasi digital.
+            </p>
+        </section>
+
+    </main>
+
+
+    <!-- FOOTER -->
+    <footer>
+        <p>© 2026 GambarIn! Digital Art Marketplace.</p>
+    </footer>
+
+
+    <!-- Menghubungkan file JavaScript -->
+   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js"></script>
+<script src="script.js"></script>
+
+</body>
+</html>
