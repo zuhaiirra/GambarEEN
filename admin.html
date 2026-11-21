@@ -6,6 +6,40 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard | GambarIn!</title>
     <link rel="stylesheet" href="admin.css">
+
+    <style>
+        .creator-watermark {
+            position: fixed;
+            bottom: 18px;
+            right: 20px;
+            z-index: 9999;
+            padding: 8px 14px;
+            border-radius: 30px;
+            background: rgba(255, 255, 255, 0.88);
+            border: 1px solid rgba(0, 0, 0, 0.07);
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+            font-family: 'Poppins', sans-serif;
+            font-size: 10px;
+            color: #888;
+            letter-spacing: 0.3px;
+            pointer-events: none;
+            backdrop-filter: blur(8px);
+        }
+
+        .creator-watermark span {
+            color: #333;
+            font-weight: 700;
+        }
+
+        @media (max-width: 480px) {
+            .creator-watermark {
+                bottom: 12px;
+                right: 12px;
+                font-size: 9px;
+                padding: 6px 11px;
+            }
+        }
+    </style>
 </head>
 <body>
 <div class="admin-layout">
@@ -191,21 +225,20 @@
             </div>
             <div class="filter-panel">
                 <input type="search" id="searchOrder" placeholder="Cari nama artwork...">
-                
-<select id="orderStatusFilter">
-    <option value="all">Semua Status</option>
-    <option value="waiting_admin_quote">Menunggu Harga Admin</option>
-    <option value="waiting_buyer_approval">Menunggu Persetujuan Buyer</option>
-    <option value="waiting_seller_approval">Menunggu Persetujuan Seller</option>
-    <option value="waiting_payment">Menunggu Pembayaran</option>
-    <option value="waiting_verification">Menunggu Verifikasi</option>
-    <option value="confirmed">Dikonfirmasi</option>
-    <option value="in_progress">Sedang Dikerjakan</option>
-    <option value="revision">Revisi</option>
-    <option value="completed">Selesai</option>
-    <option value="cancelled">Dibatalkan</option>
-</select>
 
+                <select id="orderStatusFilter">
+                    <option value="all">Semua Status</option>
+                    <option value="waiting_admin_quote">Menunggu Harga Admin</option>
+                    <option value="waiting_buyer_approval">Menunggu Persetujuan Buyer</option>
+                    <option value="waiting_seller_approval">Menunggu Persetujuan Seller</option>
+                    <option value="waiting_payment">Menunggu Pembayaran</option>
+                    <option value="waiting_verification">Menunggu Verifikasi</option>
+                    <option value="confirmed">Dikonfirmasi</option>
+                    <option value="in_progress">Sedang Dikerjakan</option>
+                    <option value="revision">Revisi</option>
+                    <option value="completed">Selesai</option>
+                    <option value="cancelled">Dibatalkan</option>
+                </select>
             </div>
             <div class="content-card">
                 <div class="table-wrap">
@@ -268,6 +301,11 @@
         <button id="confirmRejectButton" class="danger-button">Tolak Artwork</button>
         <p id="rejectMessage" class="form-message"></p>
     </div>
+</div>
+
+<!-- WATERMARK -->
+<div class="creator-watermark">
+    Created by <span>@zuhaiirra</span>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
