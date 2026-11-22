@@ -1,11 +1,14 @@
 
 // =====================================
 // GAMBARIN! - AUTHENTICATION SYSTEM
+// + DYNAMIC ARTWORK CATALOG
 // =====================================
 
 const modal = document.createElement("div");
 modal.classList.add("modal");
 document.body.appendChild(modal);
+
+let selectedArtwork = null;
 
 // =====================================
 // 1. CEK ROLE & REDIRECT
@@ -219,7 +222,6 @@ async function handleAuth(event) {
 
             if (data.session && data.user) {
                 message.textContent = "Registrasi berhasil! Mengarahkan...";
-
                 await redirectByRole(data.user);
 
             } else {
@@ -242,7 +244,6 @@ async function handleAuth(event) {
             }
 
             message.textContent = "Login berhasil! Mengarahkan...";
-
             await redirectByRole(data.user);
         }
 
@@ -275,7 +276,7 @@ async function logoutGambarIn() {
 }
 
 // =====================================
-// 5. TUTUP MODAL
+// 5. TUTUP MODAL LOGIN / REGISTER
 // =====================================
 
 function closeForm() {
@@ -360,30 +361,385 @@ async function updateNavbar() {
 }
 
 // =====================================
-// 8. INITIALIZATION
+// 8. FORMAT HARGA
+// =====================================
+
+function formatArtworkPrice(price) {
+    return Number(price || 0).toLocaleString("id-ID", {
+        style: "currency",
+        currency: "IDR",
+        maximumFractionDigits: 0
+    });
+}
+
+// =====================================
+// 9. LOAD ARTWORK DARI SUPABASE
+// =====================================
+
+async function loadApprovedArtworks() {
+    const container = document.getElementById("artworkContainer");
+
+    if (!container) return;
+
+    container.innerHTML = `
+        <div class="artwork-loading">
+            Memuat karya dari para kreator...
+        </div>
+    `;
+
+    try {
+        const { data: artworks, error } = await supabaseClient
+            .from("artworks")
+            .select("*")
+            .eq("status", "approved")
+            .order("created_at", { ascending: false });
+
+        if (error) throw error;
+
+        if (!artworks || artworks.length === 0) {
+            container.innerHTML = `
+                <div class="artwork-empty">
+                    <h3>Belum ada artwork</h3>
+                    <p>
+                        Karya dari para kreator akan muncul di sini
+                        setelah disetujui oleh Admin.
+                    </p>
+                </div>
+            `;
+            return;
+        }
+
+        // Mengambil profil Seller
+        const sellerIds = [
+            ...new Set(
+                artworks
+                    .map(artwork => artwork.seller_id)
+                    .filter(Boolean)
+            )
+        ];
+
+        const sellerMap = {};
+
+        if (sellerIds.length > 0) {
+            const { data: sellers, error: sellerError } =
+                await supabaseClient
+                    .from("profiles")
+                    .select("id, full_name, username, store_name")
+                    .in("id", sellerIds);
+
+            if (sellerError) {
+                console.error(
+                    "Gagal mengambil profil Seller:",
+                    sellerError.message
+                );
+            } else if (sellers) {
+                sellers.forEach(seller => {
+                    sellerMap[seller.id] =
+                        seller.store_name ||
+                        seller.username ||
+                        seller.full_name ||
+                        "Digital Artist";
+                });
+            }
+        }
+
+        container.innerHTML = "";
+
+        artworks.forEach(artwork => {
+            const sellerName =
+                sellerMap[artwork.seller_id] || "Digital Artist";
+
+            const card = document.createElement("div");
+            card.classList.add("artwork-card");
+            card.setAttribute("tabindex", "0");
+            card.setAttribute("role", "button");
+            card.setAttribute(
+                "aria-label",
+                `Lihat detail ${artwork.title || "artwork"}`
+            );
+
+            const imageWrapper = document.createElement("div");
+            imageWrapper.classList.add("artwork-image");
+
+            const image = document.createElement("img");
+            image.src = artwork.image_url || "";
+            image.alt = artwork.title || "Artwork";
+            image.loading = "lazy";
+
+            image.onerror = () => {
+                imageWrapper.innerHTML = `
+                    <div class="artwork-empty">
+                        Gambar tidak tersedia
+                    </div>
+                `;
+            };
+
+            imageWrapper.appendChild(image);
+
+            const info = document.createElement("div");
+            info.classList.add("artwork-info");
+
+            const title = document.createElement("h3");
+            title.textContent =
+                artwork.title || "Untitled Artwork";
+
+            const seller = document.createElement("p");
+            seller.textContent = `by ${sellerName}`;
+
+            const category = document.createElement("span");
+            category.classList.add("artwork-category");
+            category.textContent = artwork.category || "Artwork";
+
+            const price = document.createElement("strong");
+            price.textContent = formatArtworkPrice(artwork.price);
+
+            info.append(title, seller, category, price);
+            card.append(imageWrapper, info);
+
+            // Klik kartu untuk membuka detail
+            card.addEventListener("click", () => {
+                openArtworkDetail(artwork, sellerName);
+            });
+
+            card.addEventListener("keydown", event => {
+                if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    openArtworkDetail(artwork, sellerName);
+                }
+            });
+
+            container.appendChild(card);
+        });
+
+        console.log(
+            `${artworks.length} artwork berhasil ditampilkan.`
+        );
+
+    } catch (error) {
+        console.error("Gagal memuat artwork:", error);
+
+        container.innerHTML = `
+            <div class="artwork-error">
+                <h3>Gagal memuat artwork</h3>
+                <p></p>
+            </div>
+        `;
+
+        container.querySelector(".artwork-error p").textContent =
+            error.message;
+    }
+}
+
+// =====================================
+// 10. BUAT MODAL DETAIL ARTWORK
+// =====================================
+
+function createArtworkDetailModal() {
+    if (document.getElementById("artworkDetailModal")) return;
+
+    const detailModal = document.createElement("div");
+    detailModal.id = "artworkDetailModal";
+    detailModal.classList.add("artwork-detail-modal");
+
+    detailModal.innerHTML = `
+        <div class="artwork-detail-content">
+
+            <button
+                type="button"
+                class="artwork-detail-close"
+                id="closeArtworkDetail"
+                aria-label="Tutup detail"
+            >
+                &times;
+            </button>
+
+            <div class="artwork-detail-image">
+                <img id="detailArtworkImage" src="" alt="Artwork">
+            </div>
+
+            <div class="artwork-detail-info">
+                <span id="detailArtworkCategory" class="artwork-category"></span>
+
+                <h2 id="detailArtworkTitle"></h2>
+
+                <p id="detailArtworkSeller" class="artwork-detail-seller"></p>
+
+                <p id="detailArtworkDescription"></p>
+
+                <strong
+                    id="detailArtworkPrice"
+                    class="artwork-detail-price"
+                ></strong>
+
+                <button
+                    type="button"
+                    class="artwork-detail-order"
+                    id="orderArtworkButton"
+                >
+                    Pesan Sekarang
+                </button>
+            </div>
+
+        </div>
+    `;
+
+    document.body.appendChild(detailModal);
+
+    document.getElementById("closeArtworkDetail")
+        .addEventListener("click", closeArtworkDetail);
+
+    detailModal.addEventListener("click", event => {
+        if (event.target === detailModal) {
+            closeArtworkDetail();
+        }
+    });
+
+    document.getElementById("orderArtworkButton")
+        .addEventListener("click", handleArtworkOrder);
+}
+
+// =====================================
+// 11. BUKA DETAIL ARTWORK
+// =====================================
+
+function openArtworkDetail(artwork, sellerName) {
+    selectedArtwork = artwork;
+
+    createArtworkDetailModal();
+
+    const detailModal =
+        document.getElementById("artworkDetailModal");
+
+    const image =
+        document.getElementById("detailArtworkImage");
+
+    image.src = artwork.image_url || "";
+    image.alt = artwork.title || "Artwork";
+
+    image.onerror = () => {
+        image.alt = "Gambar artwork tidak tersedia";
+    };
+
+    document.getElementById("detailArtworkTitle").textContent =
+        artwork.title || "Untitled Artwork";
+
+    document.getElementById("detailArtworkSeller").textContent =
+        `Created by ${sellerName}`;
+
+    document.getElementById("detailArtworkCategory").textContent =
+        artwork.category || "Artwork";
+
+    document.getElementById("detailArtworkDescription").textContent =
+        artwork.description || "Belum ada deskripsi untuk karya ini.";
+
+    document.getElementById("detailArtworkPrice").textContent =
+        formatArtworkPrice(artwork.price);
+
+    detailModal.classList.add("active");
+    document.body.style.overflow = "hidden";
+}
+
+// =====================================
+// 12. TUTUP DETAIL ARTWORK
+// =====================================
+
+function closeArtworkDetail() {
+    const detailModal =
+        document.getElementById("artworkDetailModal");
+
+    if (detailModal) {
+        detailModal.classList.remove("active");
+    }
+
+    document.body.style.overflow = "";
+}
+
+// =====================================
+// 13. TOMBOL PESAN ARTWORK
+// =====================================
+
+async function handleArtworkOrder() {
+    if (!selectedArtwork) return;
+
+    const { data: { user }, error } =
+        await supabaseClient.auth.getUser();
+
+    if (error) {
+        alert("Gagal memeriksa akun: " + error.message);
+        return;
+    }
+
+    // Pengunjung belum login
+    if (!user) {
+        closeArtworkDetail();
+
+        alert("Silakan login sebagai Buyer untuk memesan artwork.");
+        showForm("login");
+        return;
+    }
+
+    // Cek role pengguna
+    const { data: profile, error: profileError } =
+        await supabaseClient
+            .from("profiles")
+            .select("role")
+            .eq("id", user.id)
+            .single();
+
+    if (profileError || !profile) {
+        alert("Gagal mengambil data profil pengguna.");
+        return;
+    }
+
+    if (profile.role === "buyer") {
+        // Lanjutkan pemesanan melalui dashboard Buyer
+        window.location.href = "buyer.html";
+        return;
+    }
+
+    if (profile.role === "seller") {
+        alert("Akun Seller tidak dapat melakukan pemesanan. Silakan gunakan akun Buyer.");
+        return;
+    }
+
+    if (profile.role === "admin") {
+        alert("Admin tidak dapat melakukan pemesanan artwork.");
+        return;
+    }
+}
+
+// =====================================
+// 14. EVENT KEYBOARD MODAL
+// =====================================
+
+document.addEventListener("keydown", event => {
+    if (event.key === "Escape") {
+        closeForm();
+        closeArtworkDetail();
+    }
+});
+
+// =====================================
+// 15. INITIALIZATION
 // =====================================
 
 document.addEventListener("DOMContentLoaded", async () => {
+    // Bind tombol login dan register
     bindAuthButtons();
 
+    // Klik luar modal login untuk menutup
     modal.addEventListener("click", event => {
         if (event.target === modal) {
             closeForm();
         }
     });
 
-    // Cek sesi ketika halaman Home dibuka
-    const { data: { user }, error } =
-        await supabaseClient.auth.getUser();
+    // Siapkan modal detail
+    createArtworkDetailModal();
 
-    if (error) {
-        console.error("Gagal mengecek sesi:", error);
-        return;
-    }
+    // Tampilkan katalog artwork
+    await loadApprovedArtworks();
 
-    if (user) {
-        await redirectByRole(user);
-    } else {
-        await updateNavbar();
-    }
+    // Update navbar tanpa memaksa pengguna pindah dashboard
+    await updateNavbar();
 });
