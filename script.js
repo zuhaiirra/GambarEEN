@@ -11,7 +11,26 @@ document.body.appendChild(modal);
 let selectedArtwork = null;
 
 // =====================================
-// 1. CEK ROLE & REDIRECT
+// 1. HELPER CEK SESSION
+// =====================================
+
+async function getCurrentUser() {
+    try {
+        const { data, error } =
+            await supabaseClient.auth.getSession();
+
+        if (error) throw error;
+
+        return data.session?.user || null;
+
+    } catch (error) {
+        console.error("Gagal memeriksa session:", error);
+        throw error;
+    }
+}
+
+// =====================================
+// 2. CEK ROLE & REDIRECT
 // =====================================
 
 async function redirectByRole(user) {
@@ -35,20 +54,17 @@ async function redirectByRole(user) {
 
     if (profile.role === "seller") {
         window.location.replace("seller.html");
-
     } else if (profile.role === "buyer") {
         window.location.replace("buyer.html");
-
     } else if (profile.role === "admin") {
         window.location.replace("admin.html");
-
     } else {
         console.error("Role tidak dikenali:", profile.role);
     }
 }
 
 // =====================================
-// 2. TAMPILKAN FORM LOGIN / REGISTER
+// 3. TAMPILKAN FORM LOGIN / REGISTER
 // =====================================
 
 function showForm(type) {
@@ -178,7 +194,7 @@ function showForm(type) {
 }
 
 // =====================================
-// 3. LOGIN & REGISTER
+// 4. LOGIN & REGISTER
 // =====================================
 
 async function handleAuth(event) {
@@ -195,9 +211,10 @@ async function handleAuth(event) {
     submitButton.disabled = true;
 
     try {
-        // REGISTER
-        const fullNameInput = document.getElementById("fullName");
+        const fullNameInput =
+            document.getElementById("fullName");
 
+        // REGISTER
         if (fullNameInput) {
             const fullName = fullNameInput.value.trim();
             const role = document.getElementById("role").value;
@@ -221,7 +238,9 @@ async function handleAuth(event) {
             if (error) throw error;
 
             if (data.session && data.user) {
-                message.textContent = "Registrasi berhasil! Mengarahkan...";
+                message.textContent =
+                    "Registrasi berhasil! Mengarahkan...";
+
                 await redirectByRole(data.user);
 
             } else {
@@ -243,7 +262,9 @@ async function handleAuth(event) {
                 throw new Error("Data akun tidak ditemukan.");
             }
 
-            message.textContent = "Login berhasil! Mengarahkan...";
+            message.textContent =
+                "Login berhasil! Mengarahkan...";
+
             await redirectByRole(data.user);
         }
 
@@ -257,7 +278,7 @@ async function handleAuth(event) {
 }
 
 // =====================================
-// 4. LOGOUT
+// 5. LOGOUT
 // =====================================
 
 async function logoutGambarIn() {
@@ -276,7 +297,7 @@ async function logoutGambarIn() {
 }
 
 // =====================================
-// 5. TUTUP MODAL LOGIN / REGISTER
+// 6. TUTUP MODAL LOGIN / REGISTER
 // =====================================
 
 function closeForm() {
@@ -284,7 +305,7 @@ function closeForm() {
 }
 
 // =====================================
-// 6. BIND LOGIN & REGISTER BUTTON
+// 7. BIND LOGIN & REGISTER BUTTON
 // =====================================
 
 function bindAuthButtons() {
@@ -305,7 +326,7 @@ function bindAuthButtons() {
 }
 
 // =====================================
-// 7. UPDATE NAVBAR
+// 8. UPDATE NAVBAR
 // =====================================
 
 async function updateNavbar() {
@@ -313,55 +334,57 @@ async function updateNavbar() {
 
     if (!navButtons) return;
 
-    const { data: { user }, error: authError } =
-        await supabaseClient.auth.getUser();
+    try {
+        const user = await getCurrentUser();
 
-    if (authError) {
-        console.error(authError);
-        return;
+        if (!user) {
+            navButtons.innerHTML = `
+                <button class="btn-login">Login</button>
+                <button class="btn-register">Register</button>
+            `;
+
+            bindAuthButtons();
+            return;
+        }
+
+        const { data: profile, error } = await supabaseClient
+            .from("profiles")
+            .select("full_name, role")
+            .eq("id", user.id)
+            .single();
+
+        if (error || !profile) {
+            console.error(
+                "Gagal mengambil profil:",
+                error?.message
+            );
+            return;
+        }
+
+        navButtons.innerHTML = "";
+
+        const greeting = document.createElement("span");
+        greeting.textContent =
+            `Halo, ${profile.full_name || user.email}!`;
+
+        const roleLabel = document.createElement("span");
+        roleLabel.textContent = profile.role.toUpperCase();
+        roleLabel.classList.add("user-role");
+
+        const logoutBtn = document.createElement("button");
+        logoutBtn.textContent = "Logout";
+        logoutBtn.classList.add("btn-register");
+        logoutBtn.addEventListener("click", logoutGambarIn);
+
+        navButtons.append(greeting, roleLabel, logoutBtn);
+
+    } catch (error) {
+        console.error("Gagal memperbarui navbar:", error);
     }
-
-    if (!user) {
-        navButtons.innerHTML = `
-            <button class="btn-login">Login</button>
-            <button class="btn-register">Register</button>
-        `;
-
-        bindAuthButtons();
-        return;
-    }
-
-    const { data: profile, error } = await supabaseClient
-        .from("profiles")
-        .select("full_name, role")
-        .eq("id", user.id)
-        .single();
-
-    if (error || !profile) {
-        console.error("Gagal mengambil profil:", error?.message);
-        return;
-    }
-
-    navButtons.innerHTML = "";
-
-    const greeting = document.createElement("span");
-    greeting.textContent =
-        `Halo, ${profile.full_name || user.email}!`;
-
-    const roleLabel = document.createElement("span");
-    roleLabel.textContent = profile.role.toUpperCase();
-    roleLabel.classList.add("user-role");
-
-    const logoutBtn = document.createElement("button");
-    logoutBtn.textContent = "Logout";
-    logoutBtn.classList.add("btn-register");
-    logoutBtn.addEventListener("click", logoutGambarIn);
-
-    navButtons.append(greeting, roleLabel, logoutBtn);
 }
 
 // =====================================
-// 8. FORMAT HARGA
+// 9. FORMAT HARGA
 // =====================================
 
 function formatArtworkPrice(price) {
@@ -373,7 +396,7 @@ function formatArtworkPrice(price) {
 }
 
 // =====================================
-// 9. LOAD ARTWORK DARI SUPABASE
+// 10. LOAD ARTWORK DARI SUPABASE
 // =====================================
 
 async function loadApprovedArtworks() {
@@ -409,7 +432,6 @@ async function loadApprovedArtworks() {
             return;
         }
 
-        // Mengambil profil Seller
         const sellerIds = [
             ...new Set(
                 artworks
@@ -496,7 +518,6 @@ async function loadApprovedArtworks() {
             info.append(title, seller, category, price);
             card.append(imageWrapper, info);
 
-            // Klik kartu untuk membuka detail
             card.addEventListener("click", () => {
                 openArtworkDetail(artwork, sellerName);
             });
@@ -531,7 +552,7 @@ async function loadApprovedArtworks() {
 }
 
 // =====================================
-// 10. BUAT MODAL DETAIL ARTWORK
+// 11. BUAT MODAL DETAIL ARTWORK
 // =====================================
 
 function createArtworkDetailModal() {
@@ -599,7 +620,7 @@ function createArtworkDetailModal() {
 }
 
 // =====================================
-// 11. BUKA DETAIL ARTWORK
+// 12. BUKA DETAIL ARTWORK
 // =====================================
 
 function openArtworkDetail(artwork, sellerName) {
@@ -640,7 +661,7 @@ function openArtworkDetail(artwork, sellerName) {
 }
 
 // =====================================
-// 12. TUTUP DETAIL ARTWORK
+// 13. TUTUP DETAIL ARTWORK
 // =====================================
 
 function closeArtworkDetail() {
@@ -655,61 +676,78 @@ function closeArtworkDetail() {
 }
 
 // =====================================
-// 13. TOMBOL PESAN ARTWORK
+// 14. TOMBOL PESAN ARTWORK
 // =====================================
 
 async function handleArtworkOrder() {
     if (!selectedArtwork) return;
 
-    const { data: { user }, error } =
-        await supabaseClient.auth.getUser();
+    const orderButton =
+        document.getElementById("orderArtworkButton");
 
-    if (error) {
+    if (orderButton) {
+        orderButton.disabled = true;
+        orderButton.textContent = "Memeriksa akun...";
+    }
+
+    try {
+        const user = await getCurrentUser();
+
+        // Pengunjung belum login
+        if (!user) {
+            closeArtworkDetail();
+            showForm("login");
+            return;
+        }
+
+        // Cek role pengguna
+        const { data: profile, error: profileError } =
+            await supabaseClient
+                .from("profiles")
+                .select("role")
+                .eq("id", user.id)
+                .single();
+
+        if (profileError || !profile) {
+            throw new Error(
+                profileError?.message ||
+                "Profil pengguna tidak ditemukan."
+            );
+        }
+
+        if (profile.role === "buyer") {
+            window.location.href = "buyer.html";
+            return;
+        }
+
+        if (profile.role === "seller") {
+            alert(
+                "Akun Seller tidak dapat melakukan pemesanan. Silakan gunakan akun Buyer."
+            );
+            return;
+        }
+
+        if (profile.role === "admin") {
+            alert("Admin tidak dapat melakukan pemesanan artwork.");
+            return;
+        }
+
+        alert("Role akun tidak dikenali.");
+
+    } catch (error) {
+        console.error("Gagal memeriksa akun:", error);
         alert("Gagal memeriksa akun: " + error.message);
-        return;
-    }
 
-    // Pengunjung belum login
-    if (!user) {
-        closeArtworkDetail();
-
-        alert("Silakan login sebagai Buyer untuk memesan artwork.");
-        showForm("login");
-        return;
-    }
-
-    // Cek role pengguna
-    const { data: profile, error: profileError } =
-        await supabaseClient
-            .from("profiles")
-            .select("role")
-            .eq("id", user.id)
-            .single();
-
-    if (profileError || !profile) {
-        alert("Gagal mengambil data profil pengguna.");
-        return;
-    }
-
-    if (profile.role === "buyer") {
-        // Lanjutkan pemesanan melalui dashboard Buyer
-        window.location.href = "buyer.html";
-        return;
-    }
-
-    if (profile.role === "seller") {
-        alert("Akun Seller tidak dapat melakukan pemesanan. Silakan gunakan akun Buyer.");
-        return;
-    }
-
-    if (profile.role === "admin") {
-        alert("Admin tidak dapat melakukan pemesanan artwork.");
-        return;
+    } finally {
+        if (orderButton && document.body.contains(orderButton)) {
+            orderButton.disabled = false;
+            orderButton.textContent = "Pesan Sekarang";
+        }
     }
 }
 
 // =====================================
-// 14. EVENT KEYBOARD MODAL
+// 15. EVENT KEYBOARD MODAL
 // =====================================
 
 document.addEventListener("keydown", event => {
@@ -720,26 +758,21 @@ document.addEventListener("keydown", event => {
 });
 
 // =====================================
-// 15. INITIALIZATION
+// 16. INITIALIZATION
 // =====================================
 
 document.addEventListener("DOMContentLoaded", async () => {
-    // Bind tombol login dan register
     bindAuthButtons();
 
-    // Klik luar modal login untuk menutup
     modal.addEventListener("click", event => {
         if (event.target === modal) {
             closeForm();
         }
     });
 
-    // Siapkan modal detail
     createArtworkDetailModal();
 
-    // Tampilkan katalog artwork
     await loadApprovedArtworks();
 
-    // Update navbar tanpa memaksa pengguna pindah dashboard
     await updateNavbar();
 });
