@@ -3,6 +3,7 @@
    GAMBARIN! - SELLER DASHBOARD
    Seller: Artwork, Orders, Quotation, Progress
    Platform commission: 10%
+   Artwork Archive System
 ===================================================== */
 
 const SELLER_COMMISSION_RATE = 10;
@@ -35,12 +36,15 @@ const setButtonLoading = (button, loading, loadingText = "Memproses...") => {
     if (!button) return;
 
     if (loading) {
-        button.dataset.originalText = button.textContent;
+        if (!button.dataset.originalText) {
+            button.dataset.originalText = button.textContent;
+        }
         button.disabled = true;
         button.textContent = loadingText;
     } else {
         button.disabled = false;
         button.textContent = button.dataset.originalText || "Simpan";
+        delete button.dataset.originalText;
     }
 };
 
@@ -320,7 +324,8 @@ async function uploadArtwork(event) {
                 description,
                 price,
                 category,
-                image_url: imageData.publicUrl
+                image_url: imageData.publicUrl,
+                is_archived: false
             });
 
         if (insertError) throw insertError;
@@ -396,6 +401,7 @@ function renderArtworkList() {
 
     container.innerHTML = sellerArtworks.map(artwork => {
         const status = artwork.status || "pending";
+        const archived = artwork.is_archived === true;
 
         return `
             <article class="artwork-card">
@@ -411,9 +417,9 @@ function renderArtworkList() {
                     <strong>${rupiah(artwork.price)}</strong>
 
                     <span class="order-status"
-                        style="background:${status === "approved" ? "#e5f7ef" : status === "rejected" ? "#fde8e8" : "#fff4df"};
-                        color:${status === "approved" ? "#168653" : status === "rejected" ? "#c43f3f" : "#b4771c"};">
-                        ${escapeHTML(status)}
+                        style="background:${archived ? "#eeeeee" : status === "approved" ? "#e5f7ef" : status === "rejected" ? "#fde8e8" : "#fff4df"};
+                        color:${archived ? "#666" : status === "approved" ? "#168653" : status === "rejected" ? "#c43f3f" : "#b4771c"};">
+                        ${archived ? "Diarsipkan" : escapeHTML(status)}
                     </span>
 
                     ${
@@ -425,46 +431,59 @@ function renderArtworkList() {
                     <button
                         type="button"
                         class="delete-artwork-button"
-                        data-delete-artwork="${escapeHTML(artwork.id)}"
+                        data-toggle-archive="${escapeHTML(artwork.id)}"
                         style="
                             width:100%;
                             margin-top:12px;
                             padding:10px 14px;
                             border:0;
                             border-radius:8px;
-                            background:#fde8e8;
-                            color:#c43f3f;
+                            background:${archived ? "#e5f7ef" : "#fde8e8"};
+                            color:${archived ? "#168653" : "#c43f3f"};
                             font-weight:600;
                             cursor:pointer;
                         "
                     >
-                        🗑 Hapus Artwork
+                        ${archived ? "↩ Tampilkan Kembali" : "🗑 Hapus dari Katalog"}
                     </button>
                 </div>
             </article>
         `;
     }).join("");
 
-    recentContainer.innerHTML = `
-        <div class="artwork-grid">
-            ${sellerArtworks.slice(0, 3).map(artwork => `
-                <article class="artwork-card">
-                    <img
-                        src="${escapeHTML(artwork.image_url)}"
-                        alt="${escapeHTML(artwork.title)}"
-                    >
-                    <div class="artwork-card-content">
-                        <h3>${escapeHTML(artwork.title)}</h3>
-                        <strong>${rupiah(artwork.price)}</strong>
-                    </div>
-                </article>
-            `).join("")}
-        </div>
-    `;
+    const activeArtworks = sellerArtworks.filter(
+        artwork => artwork.is_archived !== true
+    );
+
+    if (!activeArtworks.length) {
+        recentContainer.innerHTML = `
+            <div class="empty-state">
+                <h3>Belum ada artwork aktif</h3>
+                <p>Artwork yang diarsipkan tidak ditampilkan di sini.</p>
+            </div>
+        `;
+    } else {
+        recentContainer.innerHTML = `
+            <div class="artwork-grid">
+                ${activeArtworks.slice(0, 3).map(artwork => `
+                    <article class="artwork-card">
+                        <img
+                            src="${escapeHTML(artwork.image_url)}"
+                            alt="${escapeHTML(artwork.title)}"
+                        >
+                        <div class="artwork-card-content">
+                            <h3>${escapeHTML(artwork.title)}</h3>
+                            <strong>${rupiah(artwork.price)}</strong>
+                        </div>
+                    </article>
+                `).join("")}
+            </div>
+        `;
+    }
 }
 
 /* =====================================================
-   DELETE ARTWORK
+   ARCHIVE / RESTORE ARTWORK
 ===================================================== */
 
 function setupArtworkDelete() {
@@ -473,120 +492,68 @@ function setupArtworkDelete() {
     if (!container) return;
 
     container.addEventListener("click", async event => {
-        const button = event.target.closest("[data-delete-artwork]");
+        const button = event.target.closest("[data-toggle-archive]");
 
         if (!button) return;
 
-        const artworkId = button.dataset.deleteArtwork;
-        await deleteArtwork(artworkId, button);
+        const artworkId = button.dataset.toggleArchive;
+        await toggleArtworkArchive(artworkId, button);
     });
 }
 
-// Mengambil lokasi file dari URL publik Supabase Storage.
-function getArtworkStoragePath(imageUrl) {
-    if (!imageUrl) return null;
-
-    try {
-        const url = new URL(imageUrl);
-        const marker = "/storage/v1/object/public/artworks/";
-        const markerIndex = url.pathname.indexOf(marker);
-
-        if (markerIndex === -1) return null;
-
-        const encodedPath = url.pathname.slice(markerIndex + marker.length);
-
-        return encodedPath
-            .split("/")
-            .map(segment => decodeURIComponent(segment))
-            .join("/");
-
-    } catch (error) {
-        console.error("Gagal membaca lokasi file artwork:", error);
-        return null;
-    }
-}
-
-async function deleteArtwork(artworkId, button) {
-    const artwork = sellerArtworks.find(item => String(item.id) === String(artworkId));
+async function toggleArtworkArchive(artworkId, button) {
+    const artwork = sellerArtworks.find(
+        item => String(item.id) === String(artworkId)
+    );
 
     if (!artwork) {
         alert("Artwork tidak ditemukan.");
         return;
     }
 
-    const confirmed = confirm(
-        `Yakin ingin menghapus artwork "${artwork.title}"?\n\n` +
-        "Artwork yang dihapus tidak bisa dikembalikan."
-    );
+    const currentlyArchived = artwork.is_archived === true;
+    const newArchiveStatus = !currentlyArchived;
 
-    if (!confirmed) return;
+    const message = newArchiveStatus
+        ? `Arsipkan "${artwork.title}" dari katalog?\n\nArtwork tidak akan tampil di Home, tetapi data dan riwayat pesanannya tetap tersimpan.`
+        : `Tampilkan kembali "${artwork.title}" di katalog?`;
+
+    if (!confirm(message)) return;
 
     const db = getSupabase();
 
-    setButtonLoading(button, true, "Menghapus...");
+    setButtonLoading(button, true, "Memproses...");
 
     try {
-        // Cek apakah artwork sudah digunakan dalam pesanan.
-        const { data: relatedOrders, error: orderError } = await db
-            .from("orders")
-            .select("id")
-            .eq("artwork_id", artwork.id)
-            .limit(1);
-
-        if (orderError) throw orderError;
-
-        if (relatedOrders && relatedOrders.length > 0) {
-            alert(
-                "Artwork ini tidak bisa dihapus karena sudah memiliki pesanan.\n\n" +
-                "Riwayat transaksi harus tetap tersimpan."
-            );
-            return;
-        }
-
-        // Hapus data artwork dari database.
-        const { data: deletedRows, error: deleteError } = await db
+        const { data, error } = await db
             .from("artworks")
-            .delete()
+            .update({
+                is_archived: newArchiveStatus
+            })
             .eq("id", artwork.id)
             .eq("seller_id", sellerUser.id)
-            .select("id");
+            .select("id, is_archived");
 
-        if (deleteError) throw deleteError;
+        if (error) throw error;
 
-        if (!deletedRows || deletedRows.length === 0) {
+        if (!data || data.length === 0) {
             throw new Error(
-                "Artwork tidak terhapus. Periksa izin DELETE pada tabel artworks di Supabase."
+                "Perubahan tidak tersimpan. Periksa izin UPDATE pada tabel artworks di Supabase."
             );
         }
 
-        // Hapus file gambar dari Storage jika URL berasal dari bucket artworks.
-        const storagePath = getArtworkStoragePath(artwork.image_url);
-
-        let storageWarning = "";
-
-        if (storagePath) {
-            const { error: storageError } = await db.storage
-                .from("artworks")
-                .remove([storagePath]);
-
-            if (storageError) {
-                console.error("Gagal menghapus file Storage:", storageError);
-                storageWarning =
-                    "\nNamun file gambar di Storage belum berhasil dihapus.";
-            }
-        } else {
-            storageWarning =
-                "\nFile gambar tidak dihapus otomatis karena lokasi Storage tidak dikenali.";
-        }
-
-        alert("Artwork berhasil dihapus!" + storageWarning);
+        alert(
+            newArchiveStatus
+                ? "Artwork berhasil diarsipkan dari katalog!"
+                : "Artwork berhasil ditampilkan kembali!"
+        );
 
         await loadArtworks();
         updateDashboardStats();
 
     } catch (error) {
-        console.error("Delete artwork error:", error);
-        alert("Gagal menghapus artwork: " + error.message);
+        console.error("Archive artwork error:", error);
+        alert("Gagal memproses artwork: " + error.message);
     } finally {
         if (button && document.body.contains(button)) {
             setButtonLoading(button, false);
@@ -1200,11 +1167,17 @@ function updateDashboardStats() {
     const totalOrders = document.getElementById("totalOrders");
     const completedOrders = document.getElementById("completedOrders");
 
-    if (totalArtwork) totalArtwork.textContent = sellerArtworks.length;
+    const activeArtworks = sellerArtworks.filter(
+        artwork => artwork.is_archived !== true
+    );
+
+    if (totalArtwork) {
+        totalArtwork.textContent = activeArtworks.length;
+    }
 
     if (pendingArtwork) {
         pendingArtwork.textContent =
-            sellerArtworks.filter(artwork => artwork.status === "pending").length;
+            activeArtworks.filter(artwork => artwork.status === "pending").length;
     }
 
     if (totalOrders) totalOrders.textContent = sellerOrders.length;
