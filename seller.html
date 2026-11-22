@@ -1,4 +1,4 @@
-
+```html
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -11,40 +11,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="seller.css">
-
-    <style>
-        .creator-watermark {
-            position: fixed;
-            bottom: 18px;
-            right: 20px;
-            z-index: 9999;
-            padding: 8px 14px;
-            border-radius: 30px;
-            background: rgba(255, 255, 255, 0.88);
-            border: 1px solid rgba(0, 0, 0, 0.07);
-            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
-            font-family: 'Poppins', sans-serif;
-            font-size: 10px;
-            color: #888;
-            letter-spacing: 0.3px;
-            pointer-events: none;
-            backdrop-filter: blur(8px);
-        }
-
-        .creator-watermark span {
-            color: #333;
-            font-weight: 700;
-        }
-
-        @media (max-width: 480px) {
-            .creator-watermark {
-                bottom: 12px;
-                right: 12px;
-                font-size: 9px;
-                padding: 6px 11px;
-            }
-        }
-    </style>
 </head>
 
 <body>
@@ -227,16 +193,28 @@
                 <form id="uploadForm">
 
                     <label for="artworkTitle">Artwork Title</label>
-                    <input type="text" id="artworkTitle"
-                        placeholder="Masukkan judul artwork" required>
+                    <input
+                        type="text"
+                        id="artworkTitle"
+                        placeholder="Masukkan judul artwork"
+                        required
+                    >
 
                     <label for="artworkDescription">Description</label>
-                    <textarea id="artworkDescription"
-                        placeholder="Ceritakan tentang karya kamu..." required></textarea>
+                    <textarea
+                        id="artworkDescription"
+                        placeholder="Ceritakan tentang karya kamu..."
+                        required
+                    ></textarea>
 
-                    <label for="artworkPrice">Price (Rp)</label>
-                    <input type="number" id="artworkPrice"
-                        min="0" placeholder="Contoh: 50000" required>
+                    <label for="artworkPrice">Harga Artwork (Rp)</label>
+                    <input
+                        type="text"
+                        id="artworkPrice"
+                        inputmode="numeric"
+                        placeholder="Contoh: 200.000"
+                        required
+                    >
 
                     <label for="artworkCategory">Category</label>
                     <select id="artworkCategory" required>
@@ -249,8 +227,12 @@
                     </select>
 
                     <label for="artworkImage">Artwork Image</label>
-                    <input type="file" id="artworkImage"
-                        accept="image/png,image/jpeg,image/webp" required>
+                    <input
+                        type="file"
+                        id="artworkImage"
+                        accept="image/png,image/jpeg,image/webp"
+                        required
+                    >
 
                     <div id="imagePreview" class="image-preview">
                         Preview gambar akan muncul di sini.
@@ -303,7 +285,6 @@
                 <p>Pantau dan kelola pesanan dari Buyer.</p>
             </div>
 
-            <!-- RINGKASAN PESANAN -->
             <div class="stats-grid">
 
                 <div class="stat-card">
@@ -336,7 +317,6 @@
 
             </div>
 
-            <!-- DAFTAR PESANAN -->
             <div class="content-card">
 
                 <div class="card-heading">
@@ -394,10 +374,12 @@
 
                     <div class="profile-photo-section">
 
-                        <img id="profileAvatarPreview"
+                        <img
+                            id="profileAvatarPreview"
                             src=""
                             alt="Foto Profil"
-                            class="profile-avatar-preview">
+                            class="profile-avatar-preview"
+                        >
 
                         <div class="profile-photo-info">
                             <h3>Foto Profil</h3>
@@ -407,8 +389,12 @@
                                 Upload Photo
                             </label>
 
-                            <input type="file" id="profileAvatar"
-                                accept="image/png,image/jpeg,image/webp" hidden>
+                            <input
+                                type="file"
+                                id="profileAvatar"
+                                accept="image/png,image/jpeg,image/webp"
+                                hidden
+                            >
                         </div>
 
                     </div>
@@ -418,12 +404,19 @@
                     <h3 class="profile-subtitle">Personal Information</h3>
 
                     <label for="profileName">Nama Lengkap</label>
-                    <input type="text" id="profileName"
-                        placeholder="Masukkan nama lengkap" required>
+                    <input
+                        type="text"
+                        id="profileName"
+                        placeholder="Masukkan nama lengkap"
+                        required
+                    >
 
                     <label for="profileUsername">Nickname / Username</label>
-                    <input type="text" id="profileUsername"
-                        placeholder="Contoh: alfafa">
+                    <input
+                        type="text"
+                        id="profileUsername"
+                        placeholder="Contoh: alfafa"
+                    >
 
                     <label for="profileEmail">Email</label>
                     <input type="email" id="profileEmail" readonly>
@@ -433,16 +426,24 @@
                     <h3 class="profile-subtitle">Artist Information</h3>
 
                     <label for="profileStoreName">Nama Toko / Artist Name</label>
-                    <input type="text" id="profileStoreName"
-                        placeholder="Contoh: Alfa Art Studio">
+                    <input
+                        type="text"
+                        id="profileStoreName"
+                        placeholder="Contoh: Alfa Art Studio"
+                    >
 
                     <label for="profileBio">Bio</label>
-                    <textarea id="profileBio"
-                        placeholder="Ceritakan tentang dirimu dan gaya ilustrasimu..."></textarea>
+                    <textarea
+                        id="profileBio"
+                        placeholder="Ceritakan tentang dirimu dan gaya ilustrasimu..."
+                    ></textarea>
 
                     <label for="profileInstagram">Instagram</label>
-                    <input type="text" id="profileInstagram"
-                        placeholder="Contoh: @alfa.art">
+                    <input
+                        type="text"
+                        id="profileInstagram"
+                        placeholder="Contoh: @alfa.art"
+                    >
 
                     <button type="submit" class="primary-button">
                         Save Changes
@@ -460,10 +461,6 @@
 
 </div>
 
-<!-- WATERMARK -->
-<div class="creator-watermark">
-    Created by <span>@zuhaiirra</span>
-</div>
 
 <!-- SUPABASE -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -472,3 +469,4 @@
 
 </body>
 </html>
+```
