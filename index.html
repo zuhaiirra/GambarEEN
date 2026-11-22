@@ -14,7 +14,7 @@
     <!-- CSS -->
     <link rel="stylesheet" href="style.css">
 
-    <!-- WATERMARK STYLE -->
+    <!-- WATERMARK & ARTWORK MODAL STYLE -->
     <style>
         .creator-watermark {
             position: fixed;
@@ -39,12 +39,196 @@
             font-weight: 700;
         }
 
+        .artwork-loading,
+        .artwork-empty,
+        .artwork-error {
+            width: 100%;
+            padding: 40px 20px;
+            text-align: center;
+            color: #777;
+            grid-column: 1 / -1;
+        }
+
+        .artwork-error {
+            color: #c0392b;
+        }
+
+        .artwork-card {
+            cursor: pointer;
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        .artwork-card:hover {
+            transform: translateY(-6px);
+        }
+
+        .artwork-card:focus-visible {
+            outline: 3px solid #8b70c9;
+            outline-offset: 4px;
+        }
+
+        .artwork-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .artwork-category {
+            display: inline-block;
+            margin: 5px 0 8px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            background: #f0eafa;
+            color: #7657a8;
+            font-size: 11px;
+        }
+
+        /* DETAIL ARTWORK MODAL */
+        .artwork-detail-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 10000;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.65);
+            justify-content: center;
+            align-items: center;
+            overflow-y: auto;
+        }
+
+        .artwork-detail-modal.active {
+            display: flex;
+        }
+
+        .artwork-detail-content {
+            position: relative;
+            width: 100%;
+            max-width: 850px;
+            max-height: 90vh;
+            overflow-y: auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            background: #fff;
+            border-radius: 18px;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .artwork-detail-image {
+            min-height: 350px;
+            background: #f4f1f8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border-radius: 18px 0 0 18px;
+        }
+
+        .artwork-detail-image img {
+            width: 100%;
+            height: 100%;
+            max-height: 550px;
+            object-fit: contain;
+        }
+
+        .artwork-detail-info {
+            padding: 35px 30px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .artwork-detail-info h2 {
+            margin: 10px 0;
+            font-size: 25px;
+            color: #292333;
+        }
+
+        .artwork-detail-info p {
+            color: #777;
+            line-height: 1.7;
+            font-size: 13px;
+        }
+
+        .artwork-detail-seller {
+            font-weight: 600;
+            color: #7657a8 !important;
+        }
+
+        .artwork-detail-price {
+            display: block;
+            margin: 18px 0;
+            font-size: 22px;
+            color: #7657a8;
+        }
+
+        .artwork-detail-order {
+            border: none;
+            padding: 13px 20px;
+            border-radius: 10px;
+            background: #7657a8;
+            color: white;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .artwork-detail-order:hover {
+            background: #5d438b;
+        }
+
+        .artwork-detail-close {
+            position: absolute;
+            top: 12px;
+            right: 15px;
+            z-index: 2;
+            width: 35px;
+            height: 35px;
+            border: none;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.95);
+            color: #333;
+            font-size: 25px;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        @media (max-width: 650px) {
+            .artwork-detail-content {
+                grid-template-columns: 1fr;
+                max-width: 430px;
+            }
+
+            .artwork-detail-image {
+                min-height: 250px;
+                max-height: 300px;
+                border-radius: 18px 18px 0 0;
+            }
+
+            .artwork-detail-image img {
+                max-height: 300px;
+            }
+
+            .artwork-detail-info {
+                padding: 25px 22px;
+            }
+
+            .artwork-detail-info h2 {
+                font-size: 21px;
+            }
+        }
+
         @media (max-width: 480px) {
             .creator-watermark {
                 bottom: 12px;
                 right: 12px;
                 font-size: 9px;
                 padding: 6px 11px;
+            }
+
+            .artwork-detail-modal {
+                padding: 12px;
             }
         }
     </style>
@@ -106,48 +290,13 @@
                 </span>
             </div>
 
+            <!-- ARTWORK DARI SUPABASE -->
             <div class="artwork-container" id="artworkContainer">
-
-                <!-- KARYA PERTAMA -->
-                <div class="artwork-card">
-                    <div class="artwork-image">
-                        <img src="images/artwork1.jpg" alt="Ilustrasi digital pertama">
-                    </div>
-
-                    <div class="artwork-info">
-                        <h3>Dreamy Illustration</h3>
-                        <p>by Artist One</p>
-                        <strong>Rp50.000</strong>
-                    </div>
+                <div class="artwork-loading">
+                    Memuat karya dari para kreator...
                 </div>
-
-                <!-- KARYA KEDUA -->
-                <div class="artwork-card">
-                    <div class="artwork-image">
-                        <img src="images/artwork2.jpg" alt="Ilustrasi digital kedua">
-                    </div>
-
-                    <div class="artwork-info">
-                        <h3>Fantasy World</h3>
-                        <p>by Artist Two</p>
-                        <strong>Rp75.000</strong>
-                    </div>
-                </div>
-
-                <!-- KARYA KETIGA -->
-                <div class="artwork-card">
-                    <div class="artwork-image">
-                        <img src="images/artwork3.jpg" alt="Ilustrasi digital ketiga">
-                    </div>
-
-                    <div class="artwork-info">
-                        <h3>Little Memories</h3>
-                        <p>by Artist Three</p>
-                        <strong>Rp60.000</strong>
-                    </div>
-                </div>
-
             </div>
+
         </section>
 
         <!-- ABOUT SECTION -->
