@@ -280,7 +280,8 @@ async function uploadArtwork(event) {
 
     const title = document.getElementById("artworkTitle").value.trim();
     const description = document.getElementById("artworkDescription").value.trim();
-    const price = Number(document.getElementById("artworkPrice").value);
+const priceInput = document.getElementById("artworkPrice").value.trim();
+const price = Number(priceInput.replace(/\D/g, ""));
     const category = document.getElementById("artworkCategory").value;
     const file = document.getElementById("artworkImage").files[0];
 
