@@ -2,6 +2,7 @@
 // =====================================
 // GAMBARIN! - AUTHENTICATION SYSTEM
 // + DYNAMIC ARTWORK CATALOG
+// + FILTER ARTWORK YANG DIARSIPKAN
 // =====================================
 
 const modal = document.createElement("div");
@@ -19,7 +20,6 @@ async function getCurrentUser() {
         const { data, error } =
             await supabaseClient.auth.getSession();
 
-        // Session tidak tersedia berarti pengguna belum login
         if (error) {
             const errorMessage = error.message?.toLowerCase() || "";
 
@@ -442,6 +442,7 @@ async function loadApprovedArtworks() {
             .from("artworks")
             .select("*")
             .eq("status", "approved")
+            .eq("is_archived", false)
             .order("created_at", { ascending: false });
 
         if (error) throw error;
