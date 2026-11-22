@@ -130,8 +130,6 @@ async function downloadFinalArtwork(orderId) {
             button.textContent = "Menyiapkan file...";
         }
 
-        // final_file_url dari Seller biasanya berupa public URL.
-        // Jika ternyata berupa path, buat public URL dari bucket.
         let fileUrl = order.final_file_url;
 
         if (!/^https?:\/\//i.test(fileUrl)) {
@@ -148,7 +146,6 @@ async function downloadFinalArtwork(orderId) {
             throw new Error("Alamat file hasil akhir tidak valid.");
         }
 
-        // Ambil file sebagai Blob agar browser dapat mengunduhnya.
         const response = await fetch(validUrl);
 
         if (!response.ok) {
@@ -519,6 +516,7 @@ async function loadArtworks() {
         .from("artworks")
         .select("*")
         .eq("status", "approved")
+        .eq("is_archived", false)
         .order("created_at", { ascending: false });
 
     if (error) throw error;
