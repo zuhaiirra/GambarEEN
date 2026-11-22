@@ -12,21 +12,16 @@ let sellerProfile = null;
 let sellerArtworks = [];
 let sellerOrders = [];
 
-const rupiah = (amount) => {
-    return new Intl.NumberFormat("id-ID", {
-        style: "currency",
-        currency: "IDR",
-        maximumFractionDigits: 0
-    }).format(Number(amount || 0));
-};
+const rupiah = (amount) => new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    maximumFractionDigits: 0
+}).format(Number(amount || 0));
 
 const escapeHTML = (value) => {
     return String(value ?? "").replace(/[&<>"']/g, (char) => ({
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        '"': "&quot;",
-        "'": "&#039;"
+        "&": "&amp;", "<": "&lt;", ">": "&gt;",
+        '"': "&quot;", "'": "&#039;"
     })[char]);
 };
 
@@ -81,14 +76,10 @@ const statusColors = {
 
 function getSupabase() {
     if (typeof supabaseClient === "undefined") {
-        throw new Error(
-            "Supabase client tidak ditemukan. Periksa js/supabase.js."
-        );
+        throw new Error("Supabase client tidak ditemukan. Periksa js/supabase.js.");
     }
-
     return supabaseClient;
 }
-
 
 /* =====================================================
    AUTHENTICATION
@@ -97,7 +88,6 @@ function getSupabase() {
 async function initializeSeller() {
     try {
         const db = getSupabase();
-
         const { data: { session }, error } = await db.auth.getSession();
 
         if (error) throw error;
@@ -128,14 +118,12 @@ async function initializeSeller() {
         renderProfile();
         setupNavigation();
         setupArtworkUpload();
+        setupArtworkDelete();
         setupProfileForm();
         setupAvatarUpload();
         setupLogout();
 
-        await Promise.all([
-            loadArtworks(),
-            loadOrders()
-        ]);
+        await Promise.all([loadArtworks(), loadOrders()]);
 
         updateDashboardStats();
 
@@ -145,16 +133,12 @@ async function initializeSeller() {
     }
 }
 
-
 /* =====================================================
    PROFILE DISPLAY
 ===================================================== */
 
 function renderProfile() {
-    const name =
-        sellerProfile.full_name ||
-        sellerProfile.username ||
-        "Seller";
+    const name = sellerProfile.full_name || sellerProfile.username || "Seller";
 
     const sidebarName = document.getElementById("sidebarName");
     const topbarName = document.getElementById("topbarName");
@@ -172,19 +156,19 @@ function renderProfile() {
         avatar.textContent = nameInitial;
     });
 
-    const profileName = document.getElementById("profileName");
-    const profileUsername = document.getElementById("profileUsername");
-    const profileEmail = document.getElementById("profileEmail");
-    const profileStoreName = document.getElementById("profileStoreName");
-    const profileBio = document.getElementById("profileBio");
-    const profileInstagram = document.getElementById("profileInstagram");
+    const fields = {
+        profileName: sellerProfile.full_name || "",
+        profileUsername: sellerProfile.username || "",
+        profileEmail: sellerUser.email || "",
+        profileStoreName: sellerProfile.store_name || "",
+        profileBio: sellerProfile.bio || "",
+        profileInstagram: sellerProfile.instagram || ""
+    };
 
-    if (profileName) profileName.value = sellerProfile.full_name || "";
-    if (profileUsername) profileUsername.value = sellerProfile.username || "";
-    if (profileEmail) profileEmail.value = sellerUser.email || "";
-    if (profileStoreName) profileStoreName.value = sellerProfile.store_name || "";
-    if (profileBio) profileBio.value = sellerProfile.bio || "";
-    if (profileInstagram) profileInstagram.value = sellerProfile.instagram || "";
+    Object.entries(fields).forEach(([id, value]) => {
+        const element = document.getElementById(id);
+        if (element) element.value = value;
+    });
 
     const avatarPreview = document.getElementById("profileAvatarPreview");
 
@@ -193,7 +177,6 @@ function renderProfile() {
             "https://placehold.co/120x120?text=Profile";
     }
 }
-
 
 /* =====================================================
    NAVIGATION
@@ -205,10 +188,7 @@ function openSellerPage(pageId) {
     });
 
     const selectedPage = document.getElementById(pageId);
-
-    if (selectedPage) {
-        selectedPage.classList.remove("hidden");
-    }
+    if (selectedPage) selectedPage.classList.remove("hidden");
 
     document.querySelectorAll(".menu-item[href^='#']").forEach(item => {
         item.classList.toggle(
@@ -216,8 +196,6 @@ function openSellerPage(pageId) {
             item.getAttribute("href") === `#${pageId}`
         );
     });
-
-    const heading = document.querySelector(".topbar h2");
 
     const headings = {
         dashboard: "Seller Dashboard",
@@ -228,9 +206,8 @@ function openSellerPage(pageId) {
         profile: "My Profile"
     };
 
-    if (heading) {
-        heading.textContent = headings[pageId] || "Seller Dashboard";
-    }
+    const heading = document.querySelector(".topbar h2");
+    if (heading) heading.textContent = headings[pageId] || "Seller Dashboard";
 
     window.scrollTo({ top: 0, behavior: "smooth" });
 }
@@ -239,9 +216,7 @@ function setupNavigation() {
     document.querySelectorAll(".menu-item[href^='#']").forEach(item => {
         item.addEventListener("click", event => {
             event.preventDefault();
-
-            const pageId = item.getAttribute("href").replace("#", "");
-            openSellerPage(pageId);
+            openSellerPage(item.getAttribute("href").replace("#", ""));
         });
     });
 
@@ -251,7 +226,6 @@ function setupNavigation() {
         });
     });
 }
-
 
 /* =====================================================
    ARTWORK UPLOAD
@@ -283,7 +257,6 @@ function setupArtworkUpload() {
         const image = document.createElement("img");
         image.src = URL.createObjectURL(file);
         image.alt = "Artwork Preview";
-
         image.style.maxWidth = "100%";
         image.style.maxHeight = "280px";
         image.style.objectFit = "contain";
@@ -298,14 +271,11 @@ async function uploadArtwork(event) {
     event.preventDefault();
 
     const db = getSupabase();
-
     const form = event.currentTarget;
     const button = form.querySelector('button[type="submit"]');
 
     const title = document.getElementById("artworkTitle").value.trim();
-    const description =
-        document.getElementById("artworkDescription").value.trim();
-
+    const description = document.getElementById("artworkDescription").value.trim();
     const price = Number(document.getElementById("artworkPrice").value);
     const category = document.getElementById("artworkCategory").value;
     const file = document.getElementById("artworkImage").files[0];
@@ -322,10 +292,11 @@ async function uploadArtwork(event) {
 
     setButtonLoading(button, true, "Mengunggah...");
 
+    let uploadedFilePath = null;
+
     try {
         const extension = file.name.split(".").pop().toLowerCase();
-        const filePath =
-            `${sellerUser.id}/${crypto.randomUUID()}.${extension}`;
+        const filePath = `${sellerUser.id}/${crypto.randomUUID()}.${extension}`;
 
         const { error: uploadError } = await db.storage
             .from("artworks")
@@ -335,6 +306,7 @@ async function uploadArtwork(event) {
             });
 
         if (uploadError) throw uploadError;
+        uploadedFilePath = filePath;
 
         const { data: imageData } = db.storage
             .from("artworks")
@@ -351,30 +323,34 @@ async function uploadArtwork(event) {
                 image_url: imageData.publicUrl
             });
 
-        if (insertError) {
-            await db.storage.from("artworks").remove([filePath]);
-            throw insertError;
-        }
+        if (insertError) throw insertError;
+
+        uploadedFilePath = null;
 
         alert("Artwork berhasil diunggah dan menunggu persetujuan Admin!");
 
         form.reset();
 
-        document.getElementById("imagePreview").textContent =
-            "Preview gambar akan muncul di sini.";
+        const preview = document.getElementById("imagePreview");
+        if (preview) {
+            preview.textContent = "Preview gambar akan muncul di sini.";
+        }
 
         await loadArtworks();
         updateDashboardStats();
         openSellerPage("artworks");
 
     } catch (error) {
+        if (uploadedFilePath) {
+            await db.storage.from("artworks").remove([uploadedFilePath]);
+        }
+
         console.error("Upload artwork error:", error);
         alert("Gagal mengunggah artwork: " + error.message);
     } finally {
         setButtonLoading(button, false);
     }
 }
-
 
 /* =====================================================
    LOAD ARTWORKS
@@ -395,7 +371,6 @@ async function loadArtworks() {
     }
 
     sellerArtworks = data || [];
-
     renderArtworkList();
 }
 
@@ -419,7 +394,7 @@ function renderArtworkList() {
         return;
     }
 
-    const artworkHTML = sellerArtworks.map(artwork => {
+    container.innerHTML = sellerArtworks.map(artwork => {
         const status = artwork.status || "pending";
 
         return `
@@ -446,20 +421,38 @@ function renderArtworkList() {
                             ? `<p class="artwork-rejection">${escapeHTML(artwork.rejection_reason)}</p>`
                             : ""
                     }
+
+                    <button
+                        type="button"
+                        class="delete-artwork-button"
+                        data-delete-artwork="${escapeHTML(artwork.id)}"
+                        style="
+                            width:100%;
+                            margin-top:12px;
+                            padding:10px 14px;
+                            border:0;
+                            border-radius:8px;
+                            background:#fde8e8;
+                            color:#c43f3f;
+                            font-weight:600;
+                            cursor:pointer;
+                        "
+                    >
+                        🗑 Hapus Artwork
+                    </button>
                 </div>
             </article>
         `;
     }).join("");
 
-    container.innerHTML = artworkHTML;
-
     recentContainer.innerHTML = `
         <div class="artwork-grid">
             ${sellerArtworks.slice(0, 3).map(artwork => `
                 <article class="artwork-card">
-                    <img src="${escapeHTML(artwork.image_url)}"
-                        alt="${escapeHTML(artwork.title)}">
-
+                    <img
+                        src="${escapeHTML(artwork.image_url)}"
+                        alt="${escapeHTML(artwork.title)}"
+                    >
                     <div class="artwork-card-content">
                         <h3>${escapeHTML(artwork.title)}</h3>
                         <strong>${rupiah(artwork.price)}</strong>
@@ -470,6 +463,136 @@ function renderArtworkList() {
     `;
 }
 
+/* =====================================================
+   DELETE ARTWORK
+===================================================== */
+
+function setupArtworkDelete() {
+    const container = document.getElementById("myArtworkList");
+
+    if (!container) return;
+
+    container.addEventListener("click", async event => {
+        const button = event.target.closest("[data-delete-artwork]");
+
+        if (!button) return;
+
+        const artworkId = button.dataset.deleteArtwork;
+        await deleteArtwork(artworkId, button);
+    });
+}
+
+// Mengambil lokasi file dari URL publik Supabase Storage.
+function getArtworkStoragePath(imageUrl) {
+    if (!imageUrl) return null;
+
+    try {
+        const url = new URL(imageUrl);
+        const marker = "/storage/v1/object/public/artworks/";
+        const markerIndex = url.pathname.indexOf(marker);
+
+        if (markerIndex === -1) return null;
+
+        const encodedPath = url.pathname.slice(markerIndex + marker.length);
+
+        return encodedPath
+            .split("/")
+            .map(segment => decodeURIComponent(segment))
+            .join("/");
+
+    } catch (error) {
+        console.error("Gagal membaca lokasi file artwork:", error);
+        return null;
+    }
+}
+
+async function deleteArtwork(artworkId, button) {
+    const artwork = sellerArtworks.find(item => String(item.id) === String(artworkId));
+
+    if (!artwork) {
+        alert("Artwork tidak ditemukan.");
+        return;
+    }
+
+    const confirmed = confirm(
+        `Yakin ingin menghapus artwork "${artwork.title}"?\n\n` +
+        "Artwork yang dihapus tidak bisa dikembalikan."
+    );
+
+    if (!confirmed) return;
+
+    const db = getSupabase();
+
+    setButtonLoading(button, true, "Menghapus...");
+
+    try {
+        // Cek apakah artwork sudah digunakan dalam pesanan.
+        const { data: relatedOrders, error: orderError } = await db
+            .from("orders")
+            .select("id")
+            .eq("artwork_id", artwork.id)
+            .limit(1);
+
+        if (orderError) throw orderError;
+
+        if (relatedOrders && relatedOrders.length > 0) {
+            alert(
+                "Artwork ini tidak bisa dihapus karena sudah memiliki pesanan.\n\n" +
+                "Riwayat transaksi harus tetap tersimpan."
+            );
+            return;
+        }
+
+        // Hapus data artwork dari database.
+        const { data: deletedRows, error: deleteError } = await db
+            .from("artworks")
+            .delete()
+            .eq("id", artwork.id)
+            .eq("seller_id", sellerUser.id)
+            .select("id");
+
+        if (deleteError) throw deleteError;
+
+        if (!deletedRows || deletedRows.length === 0) {
+            throw new Error(
+                "Artwork tidak terhapus. Periksa izin DELETE pada tabel artworks di Supabase."
+            );
+        }
+
+        // Hapus file gambar dari Storage jika URL berasal dari bucket artworks.
+        const storagePath = getArtworkStoragePath(artwork.image_url);
+
+        let storageWarning = "";
+
+        if (storagePath) {
+            const { error: storageError } = await db.storage
+                .from("artworks")
+                .remove([storagePath]);
+
+            if (storageError) {
+                console.error("Gagal menghapus file Storage:", storageError);
+                storageWarning =
+                    "\nNamun file gambar di Storage belum berhasil dihapus.";
+            }
+        } else {
+            storageWarning =
+                "\nFile gambar tidak dihapus otomatis karena lokasi Storage tidak dikenali.";
+        }
+
+        alert("Artwork berhasil dihapus!" + storageWarning);
+
+        await loadArtworks();
+        updateDashboardStats();
+
+    } catch (error) {
+        console.error("Delete artwork error:", error);
+        alert("Gagal menghapus artwork: " + error.message);
+    } finally {
+        if (button && document.body.contains(button)) {
+            setButtonLoading(button, false);
+        }
+    }
+}
 
 /* =====================================================
    LOAD ORDERS
@@ -497,7 +620,6 @@ async function loadOrders() {
                 </div>
             `;
         }
-
         return;
     }
 
@@ -551,7 +673,6 @@ async function loadOrderRelatedData() {
     }));
 }
 
-
 /* =====================================================
    ORDER STATISTICS
 ===================================================== */
@@ -588,7 +709,6 @@ function updateOrderStats() {
     }
 }
 
-
 /* =====================================================
    ORDER RENDERING
 ===================================================== */
@@ -620,7 +740,6 @@ function renderOrders() {
 
         return `
             <article class="seller-order-card">
-
                 <div class="seller-order-header">
                     <div>
                         <h3>${escapeHTML(artworkTitle)}</h3>
@@ -636,7 +755,6 @@ function renderOrders() {
                 </div>
 
                 <div class="seller-order-content">
-
                     ${
                         order.artwork?.image_url
                             ? `<img class="seller-order-image"
@@ -646,39 +764,23 @@ function renderOrders() {
                     }
 
                     <div class="seller-order-details">
-
-                        <p><strong>Harga dasar:</strong>
-                            ${rupiah(order.base_price)}</p>
-
-                        <p><strong>Jumlah:</strong>
-                            ${Number(order.quantity || 1)}</p>
-
-                        <p><strong>Ukuran:</strong>
-                            ${escapeHTML(order.size || "-")}</p>
-
-                        <p><strong>Resolusi:</strong>
-                            ${escapeHTML(order.resolution || "-")}</p>
-
-                        <p><strong>Format file:</strong>
-                            ${escapeHTML(order.file_format || "-")}</p>
-
+                        <p><strong>Harga dasar:</strong> ${rupiah(order.base_price)}</p>
+                        <p><strong>Jumlah:</strong> ${Number(order.quantity || 1)}</p>
+                        <p><strong>Ukuran:</strong> ${escapeHTML(order.size || "-")}</p>
+                        <p><strong>Resolusi:</strong> ${escapeHTML(order.resolution || "-")}</p>
+                        <p><strong>Format file:</strong> ${escapeHTML(order.file_format || "-")}</p>
                         <p><strong>Brief Buyer:</strong><br>
                             ${escapeHTML(order.brief || order.note || "-")}
                         </p>
-
-                        <p><strong>WhatsApp:</strong>
-                            ${escapeHTML(order.whatsapp || "-")}</p>
-
+                        <p><strong>WhatsApp:</strong> ${escapeHTML(order.whatsapp || "-")}</p>
                     </div>
                 </div>
 
                 ${renderOrderAction(order)}
-
             </article>
         `;
     }).join("");
 }
-
 
 /* =====================================================
    OPEN / CLOSE QUOTE FORM
@@ -695,14 +797,11 @@ function toggleQuoteForm(orderId) {
     form.hidden = !form.hidden;
 }
 
-
 /* =====================================================
    ORDER ACTIONS
 ===================================================== */
 
 function renderOrderAction(order) {
-
-    // FIX: pending juga bisa menerima penawaran dari seller.
     if (["pending", "waiting_seller_quote"].includes(order.status)) {
         const basePrice = Number(order.base_price || 0);
         const initialCommission = Math.round(
@@ -711,76 +810,43 @@ function renderOrderAction(order) {
 
         return `
             <div class="seller-order-action quote-action">
-
-                <button
-                    type="button"
-                    class="btn-quote"
-                    onclick="toggleQuoteForm('${escapeHTML(order.id)}')"
-                >
+                <button type="button" class="btn-quote"
+                    onclick="toggleQuoteForm('${escapeHTML(order.id)}')">
                     💰 Beri Harga
                 </button>
 
-                <div
-                    id="quote-form-${escapeHTML(order.id)}"
-                    class="quote-form-container"
-                    hidden
-                >
+                <div id="quote-form-${escapeHTML(order.id)}"
+                    class="quote-form-container" hidden>
                     <h4>Penawaran Harga</h4>
 
-                    <p>Harga dasar:
-                        <strong>${rupiah(basePrice)}</strong>
-                    </p>
+                    <p>Harga dasar: <strong>${rupiah(basePrice)}</strong></p>
 
-                    <form
-                        class="seller-quote-form"
-                        data-order-id="${escapeHTML(order.id)}"
-                    >
+                    <form class="seller-quote-form"
+                        data-order-id="${escapeHTML(order.id)}">
 
                         <label>Biaya Tambahan (Rp)</label>
-                        <input
-                            type="number"
-                            name="additional_fee"
-                            min="0"
-                            step="1"
-                            value="0"
-                            required
-                        >
+                        <input type="number" name="additional_fee"
+                            min="0" step="1" value="0" required>
 
                         <label>Catatan Biaya Tambahan</label>
-                        <textarea
-                            name="additional_fee_note"
-                            placeholder="Jelaskan alasan biaya tambahan, jika ada..."
-                        ></textarea>
+                        <textarea name="additional_fee_note"
+                            placeholder="Jelaskan alasan biaya tambahan, jika ada..."></textarea>
 
                         <div class="quote-preview">
-
                             <p>Subtotal Buyer:
-                                <strong class="preview-subtotal">
-                                    ${rupiah(basePrice)}
-                                </strong>
+                                <strong class="preview-subtotal">${rupiah(basePrice)}</strong>
                             </p>
-
                             <p>Komisi Platform (10%):
-                                <strong class="preview-commission">
-                                    ${rupiah(initialCommission)}
-                                </strong>
+                                <strong class="preview-commission">${rupiah(initialCommission)}</strong>
                             </p>
-
                             <p>Pendapatan Seller:
-                                <strong class="preview-earning">
-                                    ${rupiah(basePrice - initialCommission)}
-                                </strong>
+                                <strong class="preview-earning">${rupiah(basePrice - initialCommission)}</strong>
                             </p>
-
                         </div>
 
-                        <button
-                            type="submit"
-                            class="primary-button"
-                        >
+                        <button type="submit" class="primary-button">
                             Kirim Penawaran
                         </button>
-
                     </form>
                 </div>
             </div>
@@ -791,21 +857,13 @@ function renderOrderAction(order) {
         return `
             <div class="seller-order-action">
                 <h4>Menunggu Persetujuan Buyer</h4>
-
                 <div class="quote-preview">
                     <p>Harga Dasar: ${rupiah(order.base_price)}</p>
                     <p>Biaya Tambahan: ${rupiah(order.additional_fee)}</p>
-                    <p>Subtotal Buyer:
-                        <strong>${rupiah(order.service_subtotal)}</strong>
-                    </p>
-                    <p>Komisi Platform:
-                        ${rupiah(order.platform_fee_amount)}
-                    </p>
-                    <p>Pendapatan Seller:
-                        <strong>${rupiah(order.seller_earning)}</strong>
-                    </p>
+                    <p>Subtotal Buyer: <strong>${rupiah(order.service_subtotal)}</strong></p>
+                    <p>Komisi Platform: ${rupiah(order.platform_fee_amount)}</p>
+                    <p>Pendapatan Seller: <strong>${rupiah(order.seller_earning)}</strong></p>
                 </div>
-
                 <p>Buyer sedang mempertimbangkan penawaran harga kamu.</p>
             </div>
         `;
@@ -839,40 +897,37 @@ function renderOrderAction(order) {
     }
 
     if (["confirmed", "in_progress", "revision"].includes(order.status)) {
+        const estimatedValue = order.estimated_completion
+            ? new Date(
+                new Date(order.estimated_completion).getTime() -
+                new Date(order.estimated_completion).getTimezoneOffset() * 60000
+            ).toISOString().slice(0, 16)
+            : "";
+
         return `
             <div class="seller-order-action">
                 <h4>Update Pengerjaan</h4>
-
                 <p>Status pembayaran:
                     <strong>${escapeHTML(order.payment_status || "-")}</strong>
                 </p>
-
                 <p>Progres saat ini: ${Number(order.progress || 0)}%</p>
 
                 <form class="seller-progress-form"
                     data-order-id="${escapeHTML(order.id)}">
 
                     <label>Progres Pengerjaan (%)</label>
-                    <input type="number"
-                        name="progress"
-                        min="0"
-                        max="100"
-                        value="${Number(order.progress || 0)}"
-                        required>
+                    <input type="number" name="progress"
+                        min="0" max="100"
+                        value="${Number(order.progress || 0)}" required>
 
                     <label>Catatan Progres</label>
                     <textarea name="progress_note"
-                        placeholder="Contoh: Sketsa awal sudah selesai."
-                    >${escapeHTML(order.progress_note || "")}</textarea>
+                        placeholder="Contoh: Sketsa awal sudah selesai.">${escapeHTML(order.progress_note || "")}</textarea>
 
                     <label>Estimasi Penyelesaian</label>
                     <input type="datetime-local"
                         name="estimated_completion"
-                        value="${order.estimated_completion
-                            ? new Date(new Date(order.estimated_completion).getTime() -
-                                new Date(order.estimated_completion).getTimezoneOffset() * 60000)
-                                .toISOString().slice(0, 16)
-                            : ""}">
+                        value="${estimatedValue}">
 
                     <label>Status Pengerjaan</label>
                     <select name="status">
@@ -880,26 +935,20 @@ function renderOrderAction(order) {
                             ${order.status === "in_progress" ? "selected" : ""}>
                             Sedang Dikerjakan
                         </option>
-
                         <option value="revision"
                             ${order.status === "revision" ? "selected" : ""}>
                             Revisi
                         </option>
-
-                        <option value="completed">
-                            Selesai
-                        </option>
+                        <option value="completed">Selesai</option>
                     </select>
 
                     <label>Upload File Hasil Akhir</label>
-                    <input type="file"
-                        name="final_file"
+                    <input type="file" name="final_file"
                         accept=".png,.jpg,.jpeg,.webp,.pdf,.psd,.ai,.zip">
 
                     <button type="submit" class="primary-button">
                         Simpan Progres
                     </button>
-
                 </form>
             </div>
         `;
@@ -910,7 +959,6 @@ function renderOrderAction(order) {
             <div class="seller-order-action">
                 <h4>Pesanan Selesai ✓</h4>
                 <p>Pengerjaan pesanan telah selesai.</p>
-
                 ${
                     order.final_file_url
                         ? `<a href="${escapeHTML(order.final_file_url)}"
@@ -919,7 +967,6 @@ function renderOrderAction(order) {
                         </a>`
                         : ""
                 }
-
                 <p>Pendapatan Seller:
                     <strong>${rupiah(order.seller_earning)}</strong>
                 </p>
@@ -939,43 +986,29 @@ function renderOrderAction(order) {
     return "";
 }
 
-
 /* =====================================================
    QUOTE PREVIEW
 ===================================================== */
 
 document.addEventListener("input", event => {
-    if (!event.target.matches(
-        '.seller-quote-form input[name="additional_fee"]'
-    )) return;
+    if (!event.target.matches('.seller-quote-form input[name="additional_fee"]')) {
+        return;
+    }
 
     const form = event.target.closest(".seller-quote-form");
-
-    const order = sellerOrders.find(
-        item => item.id === form.dataset.orderId
-    );
+    const order = sellerOrders.find(item => item.id === form.dataset.orderId);
 
     if (!order) return;
 
     const additionalFee = Math.max(0, Number(event.target.value) || 0);
     const subtotal = Number(order.base_price) + additionalFee;
-
-    const commission = Math.round(
-        subtotal * SELLER_COMMISSION_RATE / 100
-    );
-
+    const commission = Math.round(subtotal * SELLER_COMMISSION_RATE / 100);
     const earning = subtotal - commission;
 
-    form.querySelector(".preview-subtotal").textContent =
-        rupiah(subtotal);
-
-    form.querySelector(".preview-commission").textContent =
-        rupiah(commission);
-
-    form.querySelector(".preview-earning").textContent =
-        rupiah(earning);
+    form.querySelector(".preview-subtotal").textContent = rupiah(subtotal);
+    form.querySelector(".preview-commission").textContent = rupiah(commission);
+    form.querySelector(".preview-earning").textContent = rupiah(earning);
 });
-
 
 /* =====================================================
    FORM SUBMISSION LISTENER
@@ -993,24 +1026,19 @@ document.addEventListener("submit", async event => {
     }
 });
 
-
 /* =====================================================
    SUBMIT SELLER QUOTE
 ===================================================== */
 
 async function submitSellerQuote(form) {
     const db = getSupabase();
-
     const orderId = form.dataset.orderId;
 
     const additionalFee = Number(
         form.querySelector('[name="additional_fee"]').value
     );
 
-    const note = form.querySelector(
-        '[name="additional_fee_note"]'
-    ).value.trim();
-
+    const note = form.querySelector('[name="additional_fee_note"]').value.trim();
     const order = sellerOrders.find(item => item.id === orderId);
 
     if (!order) {
@@ -1031,15 +1059,10 @@ async function submitSellerQuote(form) {
     }
 
     const subtotal = basePrice + additionalFee;
-
-    const platformFee = Math.round(
-        subtotal * SELLER_COMMISSION_RATE / 100
-    );
-
+    const platformFee = Math.round(subtotal * SELLER_COMMISSION_RATE / 100);
     const sellerEarning = subtotal - platformFee;
 
     const button = form.querySelector('button[type="submit"]');
-
     setButtonLoading(button, true, "Mengirim...");
 
     try {
@@ -1079,16 +1102,13 @@ async function submitSellerQuote(form) {
     }
 }
 
-
 /* =====================================================
    PROGRESS UPDATE AND FINAL FILE UPLOAD
 ===================================================== */
 
 async function submitSellerProgress(form) {
     const db = getSupabase();
-
     const orderId = form.dataset.orderId;
-
     const order = sellerOrders.find(item => item.id === orderId);
 
     if (!order) {
@@ -1096,21 +1116,11 @@ async function submitSellerProgress(form) {
         return;
     }
 
-    const progress = Number(
-        form.querySelector('[name="progress"]').value
-    );
-
-    const progressNote =
-        form.querySelector('[name="progress_note"]').value.trim();
-
-    const status =
-        form.querySelector('[name="status"]').value;
-
-    const estimatedValue =
-        form.querySelector('[name="estimated_completion"]').value;
-
-    const finalFile =
-        form.querySelector('[name="final_file"]').files[0];
+    const progress = Number(form.querySelector('[name="progress"]').value);
+    const progressNote = form.querySelector('[name="progress_note"]').value.trim();
+    const status = form.querySelector('[name="status"]').value;
+    const estimatedValue = form.querySelector('[name="estimated_completion"]').value;
+    const finalFile = form.querySelector('[name="final_file"]').files[0];
 
     if (!Number.isFinite(progress) || progress < 0 || progress > 100) {
         alert("Progres harus antara 0 sampai 100.");
@@ -1123,7 +1133,6 @@ async function submitSellerProgress(form) {
     }
 
     const button = form.querySelector('button[type="submit"]');
-
     setButtonLoading(button, true, "Menyimpan...");
 
     try {
@@ -1131,7 +1140,6 @@ async function submitSellerProgress(form) {
 
         if (finalFile) {
             const extension = finalFile.name.split(".").pop().toLowerCase();
-
             const filePath =
                 `${sellerUser.id}/${orderId}/${crypto.randomUUID()}.${extension}`;
 
@@ -1182,7 +1190,6 @@ async function submitSellerProgress(form) {
     }
 }
 
-
 /* =====================================================
    DASHBOARD STATISTICS
 ===================================================== */
@@ -1193,18 +1200,14 @@ function updateDashboardStats() {
     const totalOrders = document.getElementById("totalOrders");
     const completedOrders = document.getElementById("completedOrders");
 
-    if (totalArtwork) {
-        totalArtwork.textContent = sellerArtworks.length;
-    }
+    if (totalArtwork) totalArtwork.textContent = sellerArtworks.length;
 
     if (pendingArtwork) {
         pendingArtwork.textContent =
             sellerArtworks.filter(artwork => artwork.status === "pending").length;
     }
 
-    if (totalOrders) {
-        totalOrders.textContent = sellerOrders.length;
-    }
+    if (totalOrders) totalOrders.textContent = sellerOrders.length;
 
     if (completedOrders) {
         completedOrders.textContent =
@@ -1212,14 +1215,12 @@ function updateDashboardStats() {
     }
 }
 
-
 /* =====================================================
    PROFILE UPDATE
 ===================================================== */
 
 function setupProfileForm() {
     const form = document.getElementById("profileForm");
-
     if (!form) return;
 
     form.addEventListener("submit", async event => {
@@ -1251,24 +1252,18 @@ function setupProfileForm() {
             if (error) throw error;
 
             sellerProfile = data;
-
             renderProfile();
 
             showMessage(message, "Profil berhasil diperbarui!", true);
 
         } catch (error) {
             console.error("Profile update error:", error);
-
-            showMessage(
-                message,
-                "Gagal menyimpan profil: " + error.message
-            );
+            showMessage(message, "Gagal menyimpan profil: " + error.message);
         } finally {
             setButtonLoading(button, false);
         }
     });
 }
-
 
 /* =====================================================
    AVATAR UPLOAD
@@ -1276,12 +1271,10 @@ function setupProfileForm() {
 
 function setupAvatarUpload() {
     const input = document.getElementById("profileAvatar");
-
     if (!input) return;
 
     input.addEventListener("change", async () => {
         const file = input.files[0];
-
         if (!file) return;
 
         if (!file.type.startsWith("image/")) {
@@ -1292,16 +1285,13 @@ function setupAvatarUpload() {
 
         const preview = document.getElementById("profileAvatarPreview");
         const message = document.getElementById("profileMessage");
-
         const oldPreview = preview.src;
 
         preview.src = URL.createObjectURL(file);
 
         try {
             const db = getSupabase();
-
             const extension = file.name.split(".").pop().toLowerCase();
-
             const filePath =
                 `${sellerUser.id}/avatar-${crypto.randomUUID()}.${extension}`;
 
@@ -1328,30 +1318,19 @@ function setupAvatarUpload() {
             if (updateError) throw updateError;
 
             sellerProfile = profile;
-
             renderProfile();
 
-            showMessage(
-                message,
-                "Foto profil berhasil diperbarui!",
-                true
-            );
+            showMessage(message, "Foto profil berhasil diperbarui!", true);
 
         } catch (error) {
             console.error("Avatar upload error:", error);
-
             preview.src = oldPreview;
-
-            showMessage(
-                message,
-                "Gagal mengunggah foto: " + error.message
-            );
+            showMessage(message, "Gagal mengunggah foto: " + error.message);
         } finally {
             input.value = "";
         }
     });
 }
-
 
 /* =====================================================
    LOGOUT
@@ -1359,19 +1338,16 @@ function setupAvatarUpload() {
 
 function setupLogout() {
     const logoutButton = document.getElementById("logoutButton");
-
     if (!logoutButton) return;
 
     logoutButton.addEventListener("click", async () => {
         const confirmed = confirm("Apakah kamu yakin ingin logout?");
-
         if (!confirmed) return;
 
         logoutButton.disabled = true;
 
         try {
             const db = getSupabase();
-
             const { error } = await db.auth.signOut();
 
             if (error) throw error;
@@ -1380,14 +1356,11 @@ function setupLogout() {
 
         } catch (error) {
             console.error("Logout error:", error);
-
             alert("Gagal logout: " + error.message);
-
             logoutButton.disabled = false;
         }
     });
 }
-
 
 /* =====================================================
    START APPLICATION
