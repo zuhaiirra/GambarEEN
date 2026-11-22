@@ -19,11 +19,32 @@ async function getCurrentUser() {
         const { data, error } =
             await supabaseClient.auth.getSession();
 
-        if (error) throw error;
+        // Session tidak tersedia berarti pengguna belum login
+        if (error) {
+            const errorMessage = error.message?.toLowerCase() || "";
 
-        return data.session?.user || null;
+            if (
+                errorMessage.includes("session missing") ||
+                errorMessage.includes("auth session missing")
+            ) {
+                return null;
+            }
+
+            throw error;
+        }
+
+        return data?.session?.user || null;
 
     } catch (error) {
+        const errorMessage = error.message?.toLowerCase() || "";
+
+        if (
+            errorMessage.includes("session missing") ||
+            errorMessage.includes("auth session missing")
+        ) {
+            return null;
+        }
+
         console.error("Gagal memeriksa session:", error);
         throw error;
     }
@@ -49,8 +70,6 @@ async function redirectByRole(user) {
         );
         return;
     }
-
-    console.log("Role pengguna:", profile.role);
 
     if (profile.role === "seller") {
         window.location.replace("seller.html");
@@ -104,7 +123,6 @@ function showForm(type) {
                 <a href="#" id="switchToRegister">Register</a>
             </p>
         `;
-
     } else {
         formContent = `
             <h2>Create Account</h2>
@@ -159,12 +177,20 @@ function showForm(type) {
 
     modal.innerHTML = `
         <div class="modal-content">
-            <button class="close-modal" id="closeModal">&times;</button>
+            <button
+                type="button"
+                class="close-modal"
+                id="closeModal"
+            >
+                &times;
+            </button>
+
             ${formContent}
         </div>
     `;
 
     modal.classList.add("active");
+    modal.style.display = "flex";
 
     document.getElementById("closeModal")
         .addEventListener("click", closeForm);
@@ -202,7 +228,8 @@ async function handleAuth(event) {
 
     const form = event.target;
     const message = document.getElementById("formMessage");
-    const submitButton = form.querySelector('button[type="submit"]');
+    const submitButton =
+        form.querySelector('button[type="submit"]');
 
     const email = document.getElementById("email").value.trim();
     const password = document.getElementById("password").value;
@@ -242,7 +269,6 @@ async function handleAuth(event) {
                     "Registrasi berhasil! Mengarahkan...";
 
                 await redirectByRole(data.user);
-
             } else {
                 message.textContent =
                     "Registrasi berhasil! Silakan cek email untuk verifikasi akun.";
@@ -302,6 +328,7 @@ async function logoutGambarIn() {
 
 function closeForm() {
     modal.classList.remove("active");
+    modal.style.display = "none";
 }
 
 // =====================================
@@ -693,14 +720,14 @@ async function handleArtworkOrder() {
     try {
         const user = await getCurrentUser();
 
-        // Pengunjung belum login
+        // BELUM LOGIN: TAMPILKAN FORM LOGIN
         if (!user) {
             closeArtworkDetail();
             showForm("login");
             return;
         }
 
-        // Cek role pengguna
+        // SUDAH LOGIN: PERIKSA ROLE
         const { data: profile, error: profileError } =
             await supabaseClient
                 .from("profiles")
